@@ -1,11 +1,13 @@
 package com.github.victormpcmun.bookmark2html;
 
+import com.github.victormpcmun.bookmark2html.backup.ZipBookmarkBackup;
 import com.github.victormpcmun.bookmark2html.favicon.GoogleFaviconSource;
 import com.github.victormpcmun.bookmark2html.finder.FolderFinder;
-import com.github.victormpcmun.bookmark2html.model.BookmarkFolder;
 import com.github.victormpcmun.bookmark2html.reader.ChromeBookmarkReader;
 import com.github.victormpcmun.bookmark2html.render.PrettyHtmlRenderer;
 import com.github.victormpcmun.bookmark2html.writer.FileOutputWriter;
+
+import java.time.Clock;
 
 public final class Bookmark2html {
 
@@ -22,9 +24,11 @@ public final class Bookmark2html {
     }
 
     private static void run(Arguments arguments) {
-        BookmarkFolder exported = createExporter().export(arguments);
+        ExportResult result = createExporter().export(arguments);
         System.out.printf("Exported %d bookmarks from folder '%s' into %s%n",
-                exported.countLinks(), exported.name(), arguments.outputFile().toAbsolutePath());
+                result.exportedFolder().countLinks(), result.exportedFolder().name(), arguments.outputFile());
+        result.backupFile().ifPresent(backupFile ->
+                System.out.printf("Chrome bookmarks file backed up into %s%n", backupFile));
     }
 
     private static BookmarkExporter createExporter() {
@@ -32,6 +36,7 @@ public final class Bookmark2html {
                 new ChromeBookmarkReader(),
                 new FolderFinder(),
                 PrettyHtmlRenderer.withDefaultTemplate(new GoogleFaviconSource()),
-                new FileOutputWriter());
+                new FileOutputWriter(),
+                new ZipBookmarkBackup(Clock.systemDefaultZone()));
     }
 }
