@@ -2,9 +2,10 @@ package com.github.victormpcmun.bookmark2html;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.nio.file.Path;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -15,77 +16,78 @@ class ArgumentsTest {
     Path tempDir;
 
     @Test
-    void readsTheFourArguments() {
+    void readsTheFiveArguments() {
         Path file = TestBookmarks.file();
 
-        Arguments arguments = parse(file.toString(), output(), "TECHNICAL", backup());
+        Arguments arguments = parse(file.toString(), output(), "TECHNICAL", backup(), "5");
 
         assertEquals(file, arguments.bookmarksFile());
         assertEquals(Path.of(output()), arguments.outputFile());
         assertEquals("TECHNICAL", arguments.folderName());
-        assertEquals(Optional.of(Path.of(backup())), arguments.backupDirectory());
-    }
-
-    @Test
-    void missingBackupDirectoryMeansNoBackup() {
-        Arguments arguments = Arguments.parse(new String[]{"Bookmarks", output(), "TECHNICAL"});
-
-        assertEquals(Optional.empty(), arguments.backupDirectory());
-    }
-
-    @Test
-    void emptyBackupDirectoryMeansNoBackup() {
-        assertEquals(Optional.empty(), parse("Bookmarks", output(), "TECHNICAL", "").backupDirectory());
+        assertEquals(Path.of(backup()), arguments.backupDirectory());
+        assertEquals(5, arguments.backupsToKeep());
     }
 
     @Test
     void directoryArgumentPointsToItsBookmarksFile() {
         Path profileDirectory = TestBookmarks.file().getParent();
 
-        Arguments arguments = parse(profileDirectory.toString(), output(), "TECHNICAL", backup());
+        Arguments arguments = parse(profileDirectory.toString(), output(), "TECHNICAL", backup(), "5");
 
         assertEquals(profileDirectory.resolve("Bookmarks"), arguments.bookmarksFile());
     }
 
     @Test
     void keywordMeansEveryBookmark() {
-        assertEquals("", parse("Bookmarks", output(), "ALL_EXISTING_BOOKMARKS", backup()).folderName());
+        assertEquals("", parse("Bookmarks", output(), "ALL_EXISTING_BOOKMARKS", backup(), "5").folderName());
     }
 
     @Test
     void emptyFolderNameIsRejected() {
         ExportException error = assertThrows(ExportException.class,
-                () -> parse("Bookmarks", output(), " ", backup()));
+                () -> parse("Bookmarks", output(), " ", backup(), "5"));
 
         assertEquals("folder name is empty; use ALL_EXISTING_BOOKMARKS to export every bookmark", error.getMessage());
     }
 
     @Test
-    void folderNameIsMandatory() {
-        assertThrows(ExportException.class, () -> Arguments.parse(new String[]{"Bookmarks", output()}));
-    }
-
-    @Test
     void outputFileMustBeAFullPath() {
         ExportException error = assertThrows(ExportException.class,
-                () -> parse("Bookmarks", "out.html", "TECHNICAL", backup()));
+                () -> parse("Bookmarks", "out.html", "TECHNICAL", backup(), "5"));
 
         assertEquals("output html file must be a full path: 'out.html'", error.getMessage());
     }
 
     @Test
     void backupDirectoryMustBeAFullPath() {
-        assertThrows(ExportException.class, () -> parse("Bookmarks", output(), "TECHNICAL", "backup"));
+        assertThrows(ExportException.class, () -> parse("Bookmarks", output(), "TECHNICAL", "backup", "5"));
     }
 
     @Test
-    void wrongNumberOfArgumentsIsRejected() {
-        assertThrows(ExportException.class, () -> Arguments.parse(new String[]{"only-one"}));
-        assertThrows(ExportException.class, () -> Arguments.parse(new String[]{"1", "2", "3", "4", "5"}));
+    void oneBackupToKeepIsTheMinimum() {
+        assertEquals(1, parse("Bookmarks", output(), "TECHNICAL", backup(), "1").backupsToKeep());
     }
 
-    private Arguments parse(String bookmarks, String output, String folder, String backup) {
-        return Arguments.parse(new String[]{bookmarks, output, folder, backup});
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "-3", "five", "2.5", ""})
+    void backupsToKeepMustBeAWholeNumberOfAtLeastOne(String value) {
+        ExportException error = assertThrows(ExportException.class,
+                () -> parse("Bookmarks", output(), "TECHNICAL", backup(), value));
+
+        assertEquals("number of backups to keep must be a whole number of at least 1: '" + value + "'",
+                error.getMessage());
+    }
+
+    @Test
+    void everyArgumentIsMandatory() {
+        assertThrows(ExportException.class,
+                () -> Arguments.parse(new String[]{"Bookmarks", output(), "TECHNICAL", backup()}));
+        assertThrows(ExportException.class,
+                () -> Arguments.parse(new String[]{"Bookmarks", output(), "TECHNICAL", backup(), "5", "6"}));
+    }
+
+    private Arguments parse(String bookmarks, String output, String folder, String backup, String backupsToKeep) {
+        return Arguments.parse(new String[]{bookmarks, output, folder, backup, backupsToKeep});
     }
 
     private String output() {

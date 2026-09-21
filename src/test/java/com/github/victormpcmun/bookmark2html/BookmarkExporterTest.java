@@ -1,5 +1,6 @@
 package com.github.victormpcmun.bookmark2html;
 
+import com.github.victormpcmun.bookmark2html.backup.BackupRotation;
 import com.github.victormpcmun.bookmark2html.backup.ZipBookmarkBackup;
 import com.github.victormpcmun.bookmark2html.finder.FolderFinder;
 import com.github.victormpcmun.bookmark2html.reader.ChromeBookmarkReader;
@@ -14,10 +15,9 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BookmarkExporterTest {
@@ -29,30 +29,30 @@ class BookmarkExporterTest {
     void writesThePrettyHtmlOfTheRequestedFolderAndBacksUpTheBookmarks() throws IOException {
         Path output = tempDir.resolve("nested/bookmarks.html");
         Path backupDirectory = tempDir.resolve("backup");
-        Arguments arguments = new Arguments(TestBookmarks.file(), output, "TECHNICAL", Optional.of(backupDirectory));
 
-        ExportResult result = exporter().export(arguments);
+        ExportResult result = exporter().export(new Arguments(TestBookmarks.file(), output, "TECHNICAL", backupDirectory, 5));
 
         String html = Files.readString(output);
         assertTrue(html.contains("<h1 class=\"page-title\">TECHNICAL</h1>"));
         assertTrue(html.contains("https://docs.oracle.com/en/java/"));
-        Path backupFile = result.backupFile().orElseThrow();
-        assertEquals(backupDirectory, backupFile.getParent());
-        assertTrue(Files.exists(backupFile));
+        assertEquals(backupDirectory, result.backupFile().getParent());
+        assertTrue(Files.exists(result.backupFile()));
+        assertEquals(List.of(), result.deletedBackups());
     }
 
     @Test
-    void makesNoBackupWithoutBackupDirectory() throws IOException {
-        Path output = tempDir.resolve("bookmarks.html");
-        Arguments arguments = new Arguments(TestBookmarks.file(), output, "TECHNICAL", Optional.empty());
+    void deletesTheBackupsBeyondTheNumberToKeep() throws IOException {
+        Path backupDirectory = Files.createDirectories(tempDir.resolve("backup"));
+        Path oldest = Files.createFile(backupDirectory.resolve("original_bookmarks_20200101_000000.zip"));
+        Path older = Files.createFile(backupDirectory.resolve("original_bookmarks_20210101_000000.zip"));
+        Arguments arguments = new Arguments(TestBookmarks.file(), tempDir.resolve("out.html"), "TECHNICAL", backupDirectory, 2);
 
         ExportResult result = exporter().export(arguments);
 
-        assertTrue(Files.exists(output));
-        assertEquals(Optional.empty(), result.backupFile());
-        try (Stream<Path> files = Files.list(tempDir)) {
-            assertEquals(List.of(output), files.toList());
-        }
+        assertEquals(List.of(oldest), result.deletedBackups());
+        assertFalse(Files.exists(oldest));
+        assertTrue(Files.exists(older));
+        assertTrue(Files.exists(result.backupFile()));
     }
 
     private BookmarkExporter exporter() {
@@ -61,6 +61,7 @@ class BookmarkExporterTest {
                 new FolderFinder(),
                 PrettyHtmlRenderer.withDefaultTemplate(domains -> Map.of()),
                 new FileOutputWriter(),
-                new ZipBookmarkBackup(Clock.systemDefaultZone()));
+                new ZipBookmarkBackup(Clock.systemDefaultZone()),
+                new BackupRotation());
     }
 }

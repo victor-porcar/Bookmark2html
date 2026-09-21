@@ -3,49 +3,54 @@ package com.github.victormpcmun.bookmark2html;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.Optional;
 
 /**
- * Command line arguments: bookmarks location, output html file, folder to export and, optionally,
- * the directory where the Chrome bookmarks file is backed up (no directory, no backup).
+ * Command line arguments: bookmarks location, output html file, folder to export, the directory
+ * where the Chrome bookmarks file is backed up and how many backups are kept there.
  * The keyword ALL_EXISTING_BOOKMARKS is turned into an empty folder name, which means every bookmark.
  */
-public record Arguments(Path bookmarksFile, Path outputFile, String folderName, Optional<Path> backupDirectory) {
+public record Arguments(Path bookmarksFile, Path outputFile, String folderName,
+                        Path backupDirectory, int backupsToKeep) {
 
     static final String CHROME_BOOKMARKS_FILE = "Bookmarks";
     static final String ALL_BOOKMARKS_KEYWORD = "ALL_EXISTING_BOOKMARKS";
     static final String ALL_BOOKMARKS = "";
 
-    private static final int MANDATORY_ARGUMENTS = 3;
-    private static final int ALL_ARGUMENTS = 4;
+    private static final int EXPECTED_ARGUMENTS = 5;
 
     private static final String USAGE = """
-            expected 3 or 4 arguments
+            expected 5 arguments
               1. Chrome profile directory (or the Bookmarks file itself)
               2. Output html file, as a full path
               3. Name of the bookmark folder to export (ALL_EXISTING_BOOKMARKS exports every bookmark)
-              4. Optional: directory where the Chrome bookmarks file is backed up as a zip, as a full path
-                 (missing or "" makes no backup)
+              4. Directory where the Chrome bookmarks file is backed up as a zip, as a full path
+              5. Number of backups to keep in that directory, counting the new one; older ones are deleted
             example:
               java -jar bookmark2html.jar "C:\\Users\\me\\AppData\\Local\\Google\\Chrome\\User Data\\Default" \
-            "D:\\bookmarks\\bookmarks.html" TECHNICAL "D:\\bookmarks\\backup\"""";
+            "D:\\bookmarks\\bookmarks.html" TECHNICAL "D:\\bookmarks\\backup" 5""";
 
     public static Arguments parse(String[] args) {
-        if (args.length < MANDATORY_ARGUMENTS || args.length > ALL_ARGUMENTS) {
+        if (args.length != EXPECTED_ARGUMENTS) {
             throw new ExportException(USAGE);
         }
         return new Arguments(
                 resolveBookmarksFile(pathOf(args[0])),
                 fullPathOf(args[1], "output html file"),
                 folderNameOf(args[2]),
-                backupDirectoryOf(args));
+                fullPathOf(args[3], "backup directory"),
+                backupsToKeepOf(args[4]));
     }
 
-    private static Optional<Path> backupDirectoryOf(String[] args) {
-        if (args.length < ALL_ARGUMENTS || args[3].isBlank()) {
-            return Optional.empty();
+    private static int backupsToKeepOf(String value) {
+        try {
+            int backupsToKeep = Integer.parseInt(value.strip());
+            if (backupsToKeep >= 1) {
+                return backupsToKeep;
+            }
+        } catch (NumberFormatException e) {
+            // reported below, like any other invalid number
         }
-        return Optional.of(fullPathOf(args[3], "backup directory"));
+        throw new ExportException("number of backups to keep must be a whole number of at least 1: '" + value + "'");
     }
 
     private static String folderNameOf(String value) {

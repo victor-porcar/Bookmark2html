@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -17,10 +16,6 @@ import java.util.zip.ZipOutputStream;
  */
 public class ZipBookmarkBackup implements BookmarkBackup {
 
-    private static final String NAME_PREFIX = "original_bookmarks_";
-    private static final String EXTENSION = ".zip";
-    private static final DateTimeFormatter TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
-
     private final Clock clock;
 
     public ZipBookmarkBackup(Clock clock) {
@@ -29,7 +24,7 @@ public class ZipBookmarkBackup implements BookmarkBackup {
 
     @Override
     public Path backup(Path bookmarksFile, Path backupDirectory) {
-        Path zipFile = backupDirectory.resolve(zipName());
+        Path zipFile = backupDirectory.resolve(BackupFileName.of(LocalDateTime.now(clock)));
         try {
             Files.createDirectories(backupDirectory);
             writeZip(bookmarksFile, zipFile);
@@ -37,10 +32,6 @@ public class ZipBookmarkBackup implements BookmarkBackup {
         } catch (IOException e) {
             throw new ExportException("cannot back up the bookmarks file into " + zipFile, e);
         }
-    }
-
-    private String zipName() {
-        return NAME_PREFIX + LocalDateTime.now(clock).format(TIMESTAMP) + EXTENSION;
     }
 
     private void writeZip(Path file, Path zipFile) throws IOException {
