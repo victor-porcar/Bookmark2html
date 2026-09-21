@@ -1,0 +1,320 @@
+/* =====================================================================
+   Bookmark2html stylesheet
+   ---------------------------------------------------------------------
+   Most of the look is driven by the variables below: change them to
+   restyle the whole page. Dark mode values live in the media query.
+
+   Page structure (class names you can target):
+     .page-controls > button         the A- / A+ / Host / Width buttons
+     .page-header > .page-title, .page-summary
+     .content                        the sheet holding the tree
+       ul.tree                       the content of a folder, in Chrome order
+         li.link > a                 a bookmark
+           .link-icon .link-title .link-domain
+         li.folder > details         a subfolder (collapsible)
+           summary.folder-header > .folder-name, .folder-count
+           ul.tree                   its content, indented one level
+     .page-footer
+   ===================================================================== */
+
+:root {
+    --font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --font-size: 15px;
+
+    --color-background: #f4f5f7;
+    --color-surface: #ffffff;
+    --color-text: #1d2433;
+    --color-muted: #6b7385;
+    --color-border: #e3e6eb;
+    --color-guide: #d5dae3;
+    --color-folder: #25346e;
+    --color-accent: #3b5bdb;
+    --color-accent-soft: #edf2ff;
+    --color-hover: #f1f3f9;
+    --color-highlight: #ffe066;
+    --color-highlight-text: #1d2433;
+
+    --indent: 1.9rem;
+    --icon-size: 1.05rem;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(20, 30, 50, .05), 0 2px 8px rgba(20, 30, 50, .06);
+    --max-width: 1100px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-background: #14161b;
+        --color-surface: #1c1f26;
+        --color-text: #e4e7ee;
+        --color-muted: #939bab;
+        --color-border: #2c313b;
+        --color-guide: #363c48;
+        --color-folder: #b9c6ff;
+        --color-accent: #8ea4ff;
+        --color-accent-soft: #262d45;
+        --color-hover: #252a33;
+        --color-highlight: #ffd43b;
+        --color-highlight-text: #14161b;
+        --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+}
+
+/* ---------- page ---------- */
+
+* {
+    box-sizing: border-box;
+}
+
+/* every size in the tree is in rem, so the A-/A+ buttons scale all of it at once */
+html {
+    font-size: var(--font-size);
+}
+
+body {
+    margin: 0;
+    padding: 40px 24px;
+    background: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+/* ---------- A- / A+ / Host / Width buttons, fixed at the top right corner ---------- */
+
+.page-controls {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 1;
+    display: flex;
+    gap: 6px;
+}
+
+.page-controls button {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow);
+    font: 600 15px/1 var(--font-family);
+    cursor: pointer;
+}
+
+.page-controls button:hover {
+    background: var(--color-highlight);
+    color: var(--color-highlight-text);
+}
+
+/* Host button while the hosts are hidden */
+.page-controls .host-toggle[aria-pressed="false"] {
+    color: var(--color-muted);
+    text-decoration: line-through;
+}
+
+/* Width button while the sheet uses the whole window */
+.page-controls .width-toggle[aria-pressed="true"] {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.page-header,
+.content,
+.page-footer {
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+/* set by the Width button: only the body padding is left at the sides */
+.full-width .page-header,
+.full-width .content,
+.full-width .page-footer {
+    max-width: none;
+}
+
+.page-header {
+    margin-bottom: 28px;
+    padding-left: 16px;
+    border-left: 4px solid var(--color-accent);
+}
+
+.page-title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+.page-summary {
+    margin: 4px 0 0;
+    color: var(--color-muted);
+}
+
+.content {
+    padding: .8rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.page-footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: .8rem;
+    color: var(--color-muted);
+}
+
+/* ---------- tree: every level hangs to the right of its folder ---------- */
+
+.tree {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tree .tree {
+    margin-left: calc(var(--indent) / 2 + .4rem);
+    padding-left: calc(var(--indent) / 2);
+    border-left: 1px solid var(--color-guide);
+}
+
+/* ---------- folders ---------- */
+
+.folder-header {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .4rem .65rem;
+    border-radius: 8px;
+    color: var(--color-folder);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.folder-header::-webkit-details-marker {
+    display: none;
+}
+
+.folder-header:hover {
+    background: var(--color-hover);
+}
+
+.folder-header::before {
+    content: "\25B8";
+    width: .8rem;
+    color: var(--color-muted);
+    transition: transform .15s ease;
+}
+
+details[open] > .folder-header::before {
+    transform: rotate(90deg);
+}
+
+.folder-name {
+    font-weight: 600;
+}
+
+.folder-count {
+    min-width: 1.6rem;
+    padding: .07rem .5rem;
+    border-radius: 999px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-size: .75rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* ---------- bookmarks ---------- */
+
+.link a {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .33rem .65rem;
+    border-radius: 8px;
+    color: inherit;
+    text-decoration: none;
+}
+
+/* the bookmark under the mouse (or keyboard focus) is highlighted */
+.link a:hover,
+.link a:focus-visible {
+    background: var(--color-highlight);
+    color: var(--color-highlight-text);
+    outline: none;
+}
+
+.link a:hover .link-domain,
+.link a:focus-visible .link-domain {
+    color: var(--color-highlight-text);
+}
+
+.link-icon {
+    flex: none;
+    width: var(--icon-size);
+    height: var(--icon-size);
+}
+
+.link-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.link-domain {
+    flex: none;
+    max-width: 40%;
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-muted);
+    font-size: .8rem;
+}
+
+/* set by the Host button */
+.hide-hosts .link-domain {
+    display: none;
+}
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 600px) {
+    body {
+        padding: 24px 16px;
+    }
+
+    :root {
+        --indent: 1.2rem;
+    }
+
+    .link-domain {
+        display: none;
+    }
+}
+
+/* ---------- printing ---------- */
+
+@media print {
+    body {
+        background: none;
+        padding: 0;
+    }
+
+    .content {
+        border: none;
+        box-shadow: none;
+    }
+
+    .page-controls {
+        display: none;
+    }
+}

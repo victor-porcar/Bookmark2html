@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<style>
+{{style}}
+</style>
+</head>
+<body>
+<div class="page-controls">
+  <button type="button" data-font-step="-1" title="Smaller text" aria-label="Smaller text">A&minus;</button>
+  <button type="button" data-font-step="1" title="Bigger text" aria-label="Bigger text">A+</button>
+  <button type="button" class="host-toggle" aria-pressed="true" title="Show or hide the host of every bookmark">Host</button>
+  <button type="button" class="width-toggle" aria-pressed="false" title="Use the whole window width or the original width">Width</button>
+</div>
+<header class="page-header">
+  <h1 class="page-title">{{title}}</h1>
+  <p class="page-summary">{{summary}}</p>
+</header>
+<main class="content">
+{{content}}
+</main>
+<footer class="page-footer">Generated with Bookmark2html on {{date}}</footer>
+<script>
+/* Page controls. The browser remembers the choices made with them. */
+(function () {
+    var root = document.documentElement;
+
+    /* ---------- remembered settings ---------- */
+
+    function load(key) {
+        try {
+            return localStorage.getItem("bookmark2html." + key);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function save(key, value) {
+        try {
+            localStorage.setItem("bookmark2html." + key, value);
+        } catch (e) {
+            /* storage unavailable: the setting just is not remembered */
+        }
+    }
+
+    /* ---------- A- / A+ : root font size, everything is in rem ---------- */
+
+    var MIN_SIZE = 8;
+    var MAX_SIZE = 32;
+
+    function currentSize() {
+        return parseFloat(getComputedStyle(root).fontSize);
+    }
+
+    function applySize(size) {
+        root.style.fontSize = size + "px";
+    }
+
+    function changeSize(step) {
+        var size = Math.min(MAX_SIZE, Math.max(MIN_SIZE, currentSize() + step));
+        applySize(size);
+        save("fontSize", size);
+    }
+
+    function setUpFontSize() {
+        if (parseFloat(load("fontSize")) > 0) {
+            applySize(parseFloat(load("fontSize")));
+        }
+        document.querySelectorAll("[data-font-step]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                changeSize(Number(button.dataset.fontStep));
+            });
+        });
+    }
+
+    /* ---------- on / off buttons ---------- */
+
+    function setUpToggle(selector, key, onByDefault, apply) {
+        var button = document.querySelector(selector);
+
+        function set(on) {
+            apply(on);
+            button.setAttribute("aria-pressed", String(on));
+            save(key, on);
+        }
+
+        var saved = load(key);
+        set(saved === null ? onByDefault : saved === "true");
+        button.addEventListener("click", function () {
+            set(button.getAttribute("aria-pressed") !== "true");
+        });
+    }
+
+    /* Host : show or hide the host of every bookmark */
+    function showHosts(on) {
+        root.classList.toggle("hide-hosts", !on);
+    }
+
+    /* Width : sheet as wide as the window, or back to its original width */
+    function useFullWidth(on) {
+        root.classList.toggle("full-width", on);
+    }
+
+    setUpFontSize();
+    setUpToggle(".host-toggle", "showHosts", true, showHosts);
+    setUpToggle(".width-toggle", "fullWidth", false, useFullWidth);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+{
+   "checksum": "0123456789abcdef0123456789abcdef",
+   "roots": {
+      "bookmark_bar": {
+         "children": [ {
+            "date_added": "13300000000000000",
+            "id": "5",
+            "name": "News",
+            "type": "url",
+            "url": "https://news.example.com/"
+         }, {
+            "children": [ {
+               "id": "7",
+               "name": "Java <docs> & more",
+               "type": "url",
+               "url": "https://docs.oracle.com/en/java/"
+            }, {
+               "children": [ {
+                  "id": "9",
+                  "name": "",
+                  "type": "url",
+                  "url": "https://www.baeldung.com/"
+               } ],
+               "id": "8",
+               "name": "Tutorials",
+               "type": "folder"
+            }, {
+               "children": [ ],
+               "id": "10",
+               "name": "Empty",
+               "type": "folder"
+            } ],
+            "id": "6",
+            "name": "TECHNICAL",
+            "type": "folder"
+         } ],
+         "id": "1",
+         "name": "Bookmarks bar",
+         "type": "folder"
+      },
+      "other": {
+         "children": [ {
+            "children": [ ],
+            "id": "11",
+            "name": "TECHNICAL",
+            "type": "folder"
+         } ],
+         "id": "2",
+         "name": "Other bookmarks",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [ ],
+         "id": "3",
+         "name": "Mobile bookmarks",
+         "type": "folder"
+      }
+   },
+   "version": 1
+}
