@@ -1,2 +1,2 @@
 @echo off
-java -jar "%~dp0target\bookmark2html.jar" %*
+java -jar "%~dp0dist\bookmark2html.jar" %*

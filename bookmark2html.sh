@@ -1,2 +1,2 @@
 #!/bin/sh
-java -jar "$(dirname "$0")/target/bookmark2html.jar" "$@"
+java -jar "$(dirname "$0")/dist/bookmark2html.jar" "$@"

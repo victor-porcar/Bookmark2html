@@ -11,7 +11,7 @@ export anything from the browser first.
 ### Usage
 
 ```
-java -jar target/bookmark2html.jar <BOOKMARKS_FILES> <OUTPUT_HTML_FILE> <FOLDER_NAME> <BACKUP_DIR> <BACKUPS_TO_KEEP>
+java -jar dist/bookmark2html.jar <BOOKMARKS_FILES> <OUTPUT_HTML_FILE> <FOLDER_NAME> <BACKUP_DIR> <BACKUPS_TO_KEEP>
 ```
 
 or the same arguments with the launchers `bookmark2html.cmd` (Windows) / `bookmark2html.sh`
@@ -138,8 +138,10 @@ Requires Java 17 and Maven.
 mvn clean package
 ```
 
-It runs the tests and produces the executable `target/bookmark2html.jar`, with all its
-dependencies inside.
+It runs the tests and produces the executable `dist/bookmark2html.jar`, with all its
+dependencies inside. That jar is part of the repository, so the program can be used right after
+cloning it, with only Java 17 installed; rebuild and commit it again after changing the code.
+The dates inside the jar are fixed, so rebuilding unchanged code gives an identical jar.
 
 ### Design
 

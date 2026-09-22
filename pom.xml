@@ -19,6 +19,8 @@
         <main.class>com.github.victormpcmun.bookmark2html.Bookmark2html</main.class>
         <jackson.version>2.18.2</jackson.version>
         <junit.version>5.11.4</junit.version>
+        <!-- Fixed dates inside the jar: rebuilding unchanged code gives an identical dist/bookmark2html.jar -->
+        <project.build.outputTimestamp>2026-01-01T00:00:00Z</project.build.outputTimestamp>
     </properties>
 
     <dependencies>
@@ -51,7 +53,13 @@
                 <version>3.5.2</version>
             </plugin>
 
-            <!-- Builds a single executable jar with all dependencies inside -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+            </plugin>
+
+            <!-- Builds a single executable jar with all dependencies inside, in dist/ (kept in git) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -61,6 +69,7 @@
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                     <appendAssemblyId>false</appendAssemblyId>
+                    <outputDirectory>${project.basedir}/dist</outputDirectory>
                     <archive>
                         <manifest>
                             <mainClass>${main.class}</mainClass>
