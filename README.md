@@ -102,6 +102,10 @@ bookmark2html.cmd "C:\Users\me\AppData\Local\Google\Chrome\User Data\Default" "D
   generating the page and embedded as `data:` images, so an internet connection is needed only
   at that moment. A bookmark whose favicon cannot be downloaded just shows no icon.
 - The bookmark under the mouse (or with the keyboard focus) is highlighted in yellow.
+- A `Back` button above the header, at the left edge of the sheet (of the window with `Width`),
+  goes back to the previous page of the browser history,
+  whether another page or another folder of this one. It is disabled when there is nothing to
+  go back to, for example when the page was opened in a new tab.
 - Buttons at the top right corner:
   - `A-` / `A+` make the whole tree smaller or bigger, so more (or less) of it fits on screen.
   - `Host` hides or shows the host at the right of every bookmark.

@@ -15,6 +15,12 @@
   <button type="button" class="host-toggle" aria-pressed="true" title="Show or hide the host of every bookmark">Host</button>
   <button type="button" class="width-toggle" aria-pressed="false" title="Use the whole window width or the original width">Width</button>
 </div>
+<nav class="page-nav">
+  <button type="button" class="back-button" title="Go back to the previous page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+    <span>Back</span>
+  </button>
+</nav>
 <header class="page-header">
   <nav class="breadcrumb" aria-label="Folder path" hidden></nav>
   <h1 class="page-title">{{title}}</h1>
@@ -45,6 +51,16 @@
         } catch (e) {
             /* storage unavailable: the setting just is not remembered */
         }
+    }
+
+    /* ---------- Back : previous page of the browser history ---------- */
+
+    function setUpBackButton() {
+        var button = document.querySelector(".back-button");
+        button.disabled = history.length <= 1;
+        button.addEventListener("click", function () {
+            history.back();
+        });
     }
 
     /* ---------- A- / A+ : root font size, everything is in rem ---------- */
@@ -210,6 +226,7 @@
         window.scrollTo(0, 0);
     }
 
+    setUpBackButton();
     setUpFontSize();
     setUpToggle(".host-toggle", "showHosts", true, showHosts);
     setUpToggle(".width-toggle", "fullWidth", false, useFullWidth);
