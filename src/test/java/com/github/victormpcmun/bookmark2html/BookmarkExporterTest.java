@@ -15,6 +15,8 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -30,13 +32,15 @@ class BookmarkExporterTest {
         Path output = tempDir.resolve("nested/bookmarks.html");
         Path backupDirectory = tempDir.resolve("backup");
 
-        ExportResult result = exporter().export(new Arguments(TestBookmarks.file(), output, "TECHNICAL", backupDirectory, 5));
+        ExportResult result = exporter().export(
+                new Arguments(TestBookmarks.file(), output, "TECHNICAL", Optional.of(backupDirectory), 5));
 
         String html = Files.readString(output);
         assertTrue(html.contains("<h1 class=\"page-title\">TECHNICAL</h1>"));
         assertTrue(html.contains("https://docs.oracle.com/en/java/"));
-        assertEquals(backupDirectory, result.backupFile().getParent());
-        assertTrue(Files.exists(result.backupFile()));
+        Path backupFile = result.backupFile().orElseThrow();
+        assertEquals(backupDirectory, backupFile.getParent());
+        assertTrue(Files.exists(backupFile));
         assertEquals(List.of(), result.deletedBackups());
     }
 
@@ -45,14 +49,29 @@ class BookmarkExporterTest {
         Path backupDirectory = Files.createDirectories(tempDir.resolve("backup"));
         Path oldest = Files.createFile(backupDirectory.resolve("original_bookmarks_20200101_000000.zip"));
         Path older = Files.createFile(backupDirectory.resolve("original_bookmarks_20210101_000000.zip"));
-        Arguments arguments = new Arguments(TestBookmarks.file(), tempDir.resolve("out.html"), "TECHNICAL", backupDirectory, 2);
+        Arguments arguments = new Arguments(
+                TestBookmarks.file(), tempDir.resolve("out.html"), "TECHNICAL", Optional.of(backupDirectory), 2);
 
         ExportResult result = exporter().export(arguments);
 
         assertEquals(List.of(oldest), result.deletedBackups());
         assertFalse(Files.exists(oldest));
         assertTrue(Files.exists(older));
-        assertTrue(Files.exists(result.backupFile()));
+        assertTrue(Files.exists(result.backupFile().orElseThrow()));
+    }
+
+    @Test
+    void makesNoBackupWhenZeroBackupsAreKept() throws IOException {
+        Path output = tempDir.resolve("bookmarks.html");
+
+        ExportResult result = exporter().export(
+                new Arguments(TestBookmarks.file(), output, "TECHNICAL", Optional.empty(), 0));
+
+        assertEquals(Optional.empty(), result.backupFile());
+        assertEquals(List.of(), result.deletedBackups());
+        try (Stream<Path> files = Files.list(tempDir)) {
+            assertEquals(List.of(output), files.toList());
+        }
     }
 
     private BookmarkExporter exporter() {

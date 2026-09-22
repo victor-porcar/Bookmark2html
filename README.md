@@ -2,23 +2,30 @@
 
 Exports one folder of your Google Chrome bookmarks, or all of them, into a single,
 self-contained and pretty HTML page (stylesheet and favicons embedded, works offline, light and
-dark mode). It also keeps zipped backups of the Chrome bookmarks file it used, deleting the
-oldest ones beyond the number you choose.
+dark mode). Unless told not to, it also keeps zipped backups of the Chrome bookmarks file it
+used, deleting the oldest ones beyond the number you choose.
 
-It reads the JSON `Bookmarks` file that Chrome keeps inside each profile, so there is no
-need to export anything from the browser first.
+It reads the JSON bookmarks file that Chrome keeps inside each profile, so there is no need to
+export anything from the browser first.
 
 ### Usage
 
 ```
-java -jar target/bookmark2html.jar <CHROME_PROFILE_DIR> <OUTPUT_HTML_FILE> <FOLDER_NAME> <BACKUP_DIR> <BACKUPS_TO_KEEP>
+java -jar target/bookmark2html.jar <BOOKMARKS_FILES> <OUTPUT_HTML_FILE> <FOLDER_NAME> <BACKUP_DIR> <BACKUPS_TO_KEEP>
 ```
 
 or the same arguments with the launchers `bookmark2html.cmd` (Windows) / `bookmark2html.sh`
 (Linux, macOS). All five arguments are mandatory.
 
-- **CHROME_PROFILE_DIR** is the Chrome profile directory that contains the `Bookmarks` file.
-  The path to the `Bookmarks` file itself is accepted as well.
+- **BOOKMARKS_FILES** is the Chrome bookmarks file, or several candidate files separated by `;`:
+  the first one that exists is used, and the program prints which one it read. If none exists
+  it stops with an error listing every candidate tried. A candidate may also be a profile
+  directory, standing for the `Bookmarks` file inside it.
+
+  Listing several candidates keeps it working across Chrome versions, which have moved the
+  bookmarks around: older versions keep them in `Bookmarks`, while recent ones (Chrome 153, for
+  example) keep the bookmarks of your Google account in `AccountBookmarks` and `Bookmarks` may
+  not even exist. The profile directory is:
   - Windows: `C:\Users\<USER>\AppData\Local\Google\Chrome\User Data\<PROFILE>`
   - macOS: `~/Library/Application Support/Google/Chrome/<PROFILE>`
   - Linux: `~/.config/google-chrome/<PROFILE>`
@@ -36,31 +43,41 @@ or the same arguments with the launchers `bookmark2html.cmd` (Windows) / `bookma
   An empty name (`""`) is not accepted, because `java.exe` on Windows silently drops empty
   arguments. As a consequence, a folder named exactly `ALL_EXISTING_BOOKMARKS` cannot be exported
   on its own.
-- **BACKUP_DIR** is the full path of a directory where the Chrome `Bookmarks` file used for the
+- **BACKUP_DIR** is the full path of a directory where the Chrome bookmarks file used for the
   export is saved, zipped, as `original_bookmarks_<yyyyMMdd_HHmmss>.zip` (the date and time of
   the export). It is created if it does not exist. The backup is made once the HTML is written,
-  so a failed export leaves no backup.
+  so a failed export leaves no backup. When `BACKUPS_TO_KEEP` is `0` this argument is ignored:
+  it must still be there, but any value will do (for example `-`).
 - **BACKUPS_TO_KEEP** is how many backups are kept in `BACKUP_DIR`, counting the one just made:
-  a whole number of at least `1`. After each backup the oldest ones beyond that number are
-  deleted; with `5`, the 5 newest remain. Only files named `original_bookmarks_<yyyyMMdd_HHmmss>.zip`
-  directly inside `BACKUP_DIR` are considered, so anything else in that directory is never
-  touched, and the backup just made is never deleted.
+  a whole number of at least `0`.
+  - `0` means **no backup**: nothing is written to `BACKUP_DIR` and nothing is deleted from it.
+  - From `1` on, after each backup the oldest ones beyond that number are deleted; with `5`,
+    the 5 newest remain. Only files named `original_bookmarks_<yyyyMMdd_HHmmss>.zip` directly
+    inside `BACKUP_DIR` are considered, so anything else in that directory is never touched,
+    and the backup just made is never deleted.
 
-The program prints what it exported, where the backup went and which old backups it deleted,
-and ends with exit code `0`.
+The program prints which bookmarks file it read, what it exported, where the backup went (or
+that no backup was made) and which old backups it deleted, and ends with exit code `0`.
 On any problem (wrong arguments, folder not found, unreadable file...) it prints `Error: ...`
 and ends with exit code `1`, which makes it easy to use from scripts.
 
-Example, export the folder `TECHNICAL`, keeping the last 5 backups:
+Example, export the folder `TECHNICAL` from whichever bookmarks file this Chrome version uses,
+keeping the last 5 backups:
 
 ```
-bookmark2html.cmd "C:\Users\me\AppData\Local\Google\Chrome\User Data\Default" "D:\bookmarks\technical.html" TECHNICAL "D:\bookmarks\backup" 5
+bookmark2html.cmd "C:\Users\me\AppData\Local\Google\Chrome\User Data\Default\AccountBookmarks;C:\Users\me\AppData\Local\Google\Chrome\User Data\Default\Bookmarks" "D:\bookmarks\technical.html" TECHNICAL "D:\bookmarks\backup" 5
 ```
 
 Export every bookmark, keeping only the latest backup:
 
 ```
 bookmark2html.cmd "C:\Users\me\AppData\Local\Google\Chrome\User Data\Default" "D:\bookmarks\all.html" ALL_EXISTING_BOOKMARKS "D:\bookmarks\backup" 1
+```
+
+Export every bookmark without any backup:
+
+```
+bookmark2html.cmd "C:\Users\me\AppData\Local\Google\Chrome\User Data\Default" "D:\bookmarks\all.html" ALL_EXISTING_BOOKMARKS - 0
 ```
 
 ### The generated page
@@ -113,7 +130,8 @@ dependencies inside.
 
 ```
 Bookmark2html          entry point: parses arguments and wires the pieces
-BookmarkExporter       read -> find folder -> render -> write -> back up -> rotate backups
+BookmarksFileLocator   picks the first existing bookmarks file among the candidates
+BookmarkExporter       read -> find folder -> render -> write -> back up -> rotate backups (unless 0 to keep)
 reader/                BookmarkReader, ChromeBookmarkReader (Chrome JSON -> model)
 model/                 BookmarkFolder, BookmarkLink
 finder/                FolderFinder

@@ -13,7 +13,8 @@ import java.util.List;
 
 /**
  * Orchestrates the export: read all bookmarks, pick one folder, render it and write it,
- * then back up the bookmarks file that was used and delete the backups that are too old.
+ * then, unless no backup was asked for, back up the bookmarks file that was used and delete
+ * the backups that are too old.
  */
 public class BookmarkExporter {
 
@@ -38,8 +39,14 @@ public class BookmarkExporter {
         BookmarkFolder allBookmarks = reader.read(arguments.bookmarksFile());
         BookmarkFolder folder = finder.find(allBookmarks, arguments.folderName());
         writer.write(arguments.outputFile(), renderer.render(folder));
-        Path backupFile = backup.backup(arguments.bookmarksFile(), arguments.backupDirectory());
-        List<Path> deleted = rotation.keepNewest(arguments.backupDirectory(), backupFile, arguments.backupsToKeep());
-        return new ExportResult(folder, backupFile, deleted);
+        return arguments.backupDirectory()
+                .map(directory -> backUp(arguments, directory, folder))
+                .orElseGet(() -> ExportResult.withoutBackup(folder));
+    }
+
+    private ExportResult backUp(Arguments arguments, Path directory, BookmarkFolder folder) {
+        Path backupFile = backup.backup(arguments.bookmarksFile(), directory);
+        List<Path> deleted = rotation.keepNewest(directory, backupFile, arguments.backupsToKeep());
+        return ExportResult.withBackup(folder, backupFile, deleted);
     }
 }

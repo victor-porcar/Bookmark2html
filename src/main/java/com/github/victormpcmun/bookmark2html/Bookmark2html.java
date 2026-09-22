@@ -25,10 +25,13 @@ public final class Bookmark2html {
     }
 
     private static void run(Arguments arguments) {
+        System.out.printf("Reading Chrome bookmarks from %s%n", arguments.bookmarksFile());
         ExportResult result = createExporter().export(arguments);
         System.out.printf("Exported %d bookmarks from folder '%s' into %s%n",
                 result.exportedFolder().countLinks(), result.exportedFolder().name(), arguments.outputFile());
-        System.out.printf("Chrome bookmarks file backed up into %s%n", result.backupFile());
+        result.backupFile().ifPresentOrElse(
+                backupFile -> System.out.printf("Chrome bookmarks file backed up into %s%n", backupFile),
+                () -> System.out.println("No backup made (0 backups to keep)"));
         result.deletedBackups().forEach(deleted ->
                 System.out.printf("Old backup deleted: %s%n", deleted.getFileName()));
     }
