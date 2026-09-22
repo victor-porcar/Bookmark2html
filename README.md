@@ -1,4 +1,4 @@
-## Bookmark2html
+## bookmark2html
 
 Exports one folder of your Google Chrome bookmarks, or all of them, into a single,
 self-contained and pretty HTML page (stylesheet and favicons embedded, works offline, light and
