@@ -6,15 +6,21 @@
 
    Page structure (class names you can target):
      .page-controls > button         the A- / A+ / Host / Width buttons
-     .page-header > .page-title, .page-summary
+     .page-header > .breadcrumb, .page-title, .page-summary
+                                     .breadcrumb only shows when the address
+                                     ends with the #anchor of a folder
      .content                        the sheet holding the tree
        ul.tree                       the content of a folder, in Chrome order
          li.link > a                 a bookmark
            .link-icon .link-title .link-domain
-         li.folder > details         a subfolder (collapsible)
-           summary.folder-header > .folder-name, .folder-count
+         li.folder#anchor > details  a subfolder (collapsible); its id is its
+                                     anchor, e.g. "java/spring-boot"
+           summary.folder-header > .folder-name, .folder-count, .folder-anchor
            ul.tree                   its content, indented one level
      .page-footer
+
+   While the address ends with the #anchor of a folder, <html> has the
+   class .folder-focus, that folder has .focused and its ancestors .on-path.
    ===================================================================== */
 
 :root {
@@ -154,6 +160,37 @@ body {
     color: var(--color-muted);
 }
 
+/* ---------- path to the folder shown, when the address ends with its #anchor ---------- */
+
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem;
+    margin-bottom: 6px;
+    font-size: .9rem;
+}
+
+.breadcrumb[hidden] {
+    display: none;
+}
+
+.breadcrumb a {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb a + a::before {
+    content: "\203A";
+    display: inline-block;
+    margin-right: .35rem;
+    color: var(--color-muted);
+}
+
 .content {
     padding: .8rem;
     background: var(--color-surface);
@@ -231,6 +268,56 @@ details[open] > .folder-header::before {
     text-align: center;
 }
 
+/* the # after the count: link to this folder, shown when the mouse is over the folder */
+.folder-anchor {
+    padding: 0 .35rem;
+    border-radius: 6px;
+    color: var(--color-muted);
+    font-weight: 600;
+    text-decoration: none;
+    opacity: 0;
+}
+
+.folder-header:hover .folder-anchor,
+.folder-anchor:focus-visible {
+    opacity: 1;
+}
+
+.folder-anchor:hover,
+.folder-anchor:focus-visible {
+    background: var(--color-highlight);
+    color: var(--color-highlight-text);
+    outline: none;
+}
+
+@media (hover: none) {
+    .folder-anchor {
+        opacity: 1;
+    }
+}
+
+/* ---------- a single folder, when the address ends with its #anchor ---------- */
+
+/* only the path down to the folder is left: no sibling folders or bookmarks */
+.folder-focus .content > .tree > li:not(.on-path):not(.focused),
+.folder-focus .on-path > details > .tree > li:not(.on-path):not(.focused) {
+    display: none;
+}
+
+/* the path is in the breadcrumb and the folder name in the title */
+.folder-focus .on-path > details > .folder-header,
+.folder-focus .focused > details > .folder-header {
+    display: none;
+}
+
+/* the content of the folder starts at the left edge of the sheet */
+.folder-focus .on-path > details > .tree,
+.folder-focus .focused > details > .tree {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+}
+
 /* ---------- bookmarks ---------- */
 
 .link a {
@@ -288,8 +375,9 @@ details[open] > .folder-header::before {
 /* ---------- small screens ---------- */
 
 @media (max-width: 600px) {
+    /* the header starts below the fixed buttons, which would cover it */
     body {
-        padding: 24px 16px;
+        padding: 64px 16px 24px;
     }
 
     :root {
@@ -314,7 +402,8 @@ details[open] > .folder-header::before {
         box-shadow: none;
     }
 
-    .page-controls {
+    .page-controls,
+    .folder-anchor {
         display: none;
     }
 }

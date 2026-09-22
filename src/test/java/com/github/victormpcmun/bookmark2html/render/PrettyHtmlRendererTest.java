@@ -66,9 +66,20 @@ class PrettyHtmlRendererTest {
     void rendersSubfoldersAsCollapsibleNestedTrees() {
         String html = render("{{content}}");
 
-        assertTrue(html.contains("<li class=\"folder\">"));
+        assertTrue(html.contains("<li class=\"folder\" id=\"tools\">"));
         assertTrue(html.contains("<details open>"));
         assertTrue(html.contains("<span class=\"folder-name\">Tools</span>"));
+    }
+
+    @Test
+    void anchorsEveryFolderWithTheNamesOfItsAncestors() {
+        BookmarkFolder nested = new BookmarkFolder("Root", List.of(new BookmarkFolder("Java", List.of(
+                new BookmarkFolder("Spring Boot", List.of(new BookmarkLink("Guide", "https://spring.io/")))))));
+
+        String html = new PrettyHtmlRenderer(new PageTemplate("{{content}}"), "", FAKE_FAVICONS, FIXED_CLOCK).render(nested);
+
+        assertTrue(html.contains("<li class=\"folder\" id=\"java/spring-boot\">"));
+        assertTrue(html.contains("<a class=\"folder-anchor\" href=\"#java/spring-boot\""));
     }
 
     @Test

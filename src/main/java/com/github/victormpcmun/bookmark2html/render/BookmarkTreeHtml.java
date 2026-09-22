@@ -21,13 +21,14 @@ class BookmarkTreeHtml {
             </ul>""";
 
     private static final String FOLDER = """
-            <li class="folder">
+            <li class="folder" id="%1$s">
               <details open>
                 <summary class="folder-header">
-                  <span class="folder-name">%s</span>
-                  <span class="folder-count">%d</span>
+                  <span class="folder-name">%2$s</span>
+                  <span class="folder-count">%3$d</span>
+                  <a class="folder-anchor" href="#%1$s" title="Link to this folder" aria-label="Link to this folder">#</a>
                 </summary>
-            %s
+            %4$s
               </details>
             </li>""";
 
@@ -45,23 +46,30 @@ class BookmarkTreeHtml {
 
     /** Favicon "data:" URI by domain. */
     private final Map<String, String> favicons;
+    private final FolderAnchors anchors = new FolderAnchors();
 
     BookmarkTreeHtml(Map<String, String> favicons) {
         this.favicons = favicons;
     }
 
     String render(BookmarkFolder folder) {
+        return tree(folder, "");
+    }
+
+    /** @param anchor anchor of the folder whose content is rendered, empty for the page folder */
+    private String tree(BookmarkFolder folder, String anchor) {
         return TREE.formatted(folder.children().stream()
-                .map(this::node)
+                .map(node -> node(node, anchor))
                 .collect(Collectors.joining("\n")));
     }
 
-    private String node(BookmarkNode node) {
-        return node instanceof BookmarkFolder folder ? folder(folder) : link((BookmarkLink) node);
+    private String node(BookmarkNode node, String parentAnchor) {
+        return node instanceof BookmarkFolder folder ? folder(folder, parentAnchor) : link((BookmarkLink) node);
     }
 
-    private String folder(BookmarkFolder folder) {
-        return FOLDER.formatted(escape(folder.name()), folder.countLinks(), render(folder));
+    private String folder(BookmarkFolder folder, String parentAnchor) {
+        String anchor = anchors.anchorFor(parentAnchor, folder.name());
+        return FOLDER.formatted(escape(anchor), escape(folder.name()), folder.countLinks(), tree(folder, anchor));
     }
 
     private String link(BookmarkLink link) {

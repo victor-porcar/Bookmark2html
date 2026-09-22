@@ -86,6 +86,17 @@ bookmark2html.cmd "C:\Users\me\AppData\Local\Google\Chrome\User Data\Default" "D
 - The bookmarks as a tree, in the same order as in Chrome: the content of every folder is
   indented one level to the right with a guide line, so the hierarchy is clear at a glance.
 - Every folder can be collapsed and shows how many bookmarks it holds.
+- Every folder has an anchor made of its name and the names of the folders above it, in lower
+  case, without accents and with dashes instead of spaces and symbols: the folder
+  `Java > Spring Boot` is `#java/spring-boot`. When two folders would get the same anchor, the
+  second one gets `-2`, the third `-3`, and so on. Moving the mouse over a folder shows a `#`
+  next to its count: it links to that folder, so right-clicking it copies the link.
+
+  Opening the page with the anchor of a folder at the end of the address
+  (`bookmarks.html#java/spring-boot`) shows that folder alone: its name as the title, how many
+  bookmarks and folders it holds, and above it the path of folders leading to it, each one a
+  link to show that folder instead. The first link of the path goes back to the whole page, and
+  so do the browser back button and an anchor that matches no folder.
 - Each bookmark shows its favicon, its title (the url when it has none) and its domain.
   Favicons are downloaded (in parallel, once per domain) from Google's favicon service while
   generating the page and embedded as `data:` images, so an internet connection is needed only
@@ -135,7 +146,7 @@ BookmarkExporter       read -> find folder -> render -> write -> back up -> rota
 reader/                BookmarkReader, ChromeBookmarkReader (Chrome JSON -> model)
 model/                 BookmarkFolder, BookmarkLink
 finder/                FolderFinder
-render/                BookmarkRenderer, PrettyHtmlRenderer, PageTemplate
+render/                BookmarkRenderer, PrettyHtmlRenderer, PageTemplate, FolderAnchors
 favicon/               FaviconSource, GoogleFaviconSource
 writer/                OutputWriter, FileOutputWriter
 backup/                BookmarkBackup, ZipBookmarkBackup, BackupRotation, BackupFileName
